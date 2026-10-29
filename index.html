@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Subscription Billing — Recurring BOT payments</title>
+<meta name="description" content="Merchants publish plans, subscribers pay per cycle on BOT Chain. 1% protocol fee, settlement straight to the merchant.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fbf7f1; --card:#ffffff; --ink:#1b2a24; --mut:#6d7c74; --line:#e6ded2;
+  --green:#0f5132; --green-soft:#e7f0e9; --gold:#b7791f; --err:#b42318;
+  --r:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input{font:inherit;color:inherit}
+.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+
+/* header — editorial, centered masthead */
+header{padding:26px 0 0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mut)}
+.switch{display:inline-flex;gap:2px;padding:3px;background:var(--green-soft);border-radius:99px}
+.switch button{padding:6px 12px;border-radius:99px;font-size:11.5px;letter-spacing:.06em;color:var(--green)}
+.switch button.on{background:var(--green);color:#fff}
+.switch button:disabled{opacity:.4;cursor:not-allowed}
+.wallet{display:inline-flex;align-items:center;gap:8px}
+.chip{width:7px;height:7px;border-radius:50%;background:var(--err)}
+.chip.on{background:#12805c;box-shadow:0 0 0 3px rgba(18,128,92,.16)}
+
+.masthead{text-align:center;padding:52px 0 40px}
+.masthead .kick{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.masthead h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(36px,6vw,66px);line-height:1.02;letter-spacing:-.025em;margin:14px auto 0;max-width:17ch}
+.masthead p{color:var(--mut);font-size:16px;line-height:1.7;max-width:56ch;margin:18px auto 0}
+.rule{height:1px;background:var(--line);margin:34px 0}
+
+/* pricing table */
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:16px}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:14px;position:relative;transition:.18s;box-shadow:0 1px 2px rgba(27,42,36,.04)}
+.plan:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(27,42,36,.08)}
+.plan.dead{opacity:.55}
+.plan .tier{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.plan h3{font-family:'Fraunces',Georgia,serif;font-size:25px;font-weight:600;margin:0;letter-spacing:-.01em}
+.price{display:flex;align-items:baseline;gap:6px}
+.price b{font-family:'Fraunces',Georgia,serif;font-size:38px;font-weight:600;letter-spacing:-.03em}
+.price span{font-size:13px;color:var(--mut)}
+.plan ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:13.5px;color:var(--mut);border-top:1px dashed var(--line);padding-top:14px}
+.plan li::before{content:"✓";color:var(--green);margin-right:8px;font-weight:700}
+.btn{display:block;width:100%;text-align:center;background:var(--green);color:#fff;font-weight:700;font-size:14px;padding:12px;border-radius:11px;transition:.16s;margin-top:auto}
+.btn:hover{filter:brightness(1.14)}
+.btn.ghost{background:transparent;color:var(--green);border:1px solid var(--line);font-weight:600}
+.btn.ghost:hover{border-color:var(--green)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.owner-tag{position:absolute;top:18px;right:18px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);background:var(--green-soft);padding:4px 8px;border-radius:99px}
+
+/* sections */
+.sec{padding:44px 0 0}
+.sec h2{font-family:'Fraunces',Georgia,serif;font-size:27px;font-weight:600;margin:0 0 6px;letter-spacing:-.015em}
+.sec .sub{color:var(--mut);font-size:14px;margin:0 0 20px}
+.split{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+.box h3{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 16px;font-weight:700}
+label{display:grid;gap:7px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-bottom:14px;font-weight:600}
+input{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14.5px;width:100%}
+input:focus{outline:2px solid rgba(15,81,50,.28);outline-offset:1px;border-color:var(--green)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.note{font-size:12.5px;color:var(--mut);line-height:1.6;margin:10px 0 0}
+
+/* subscription ledger */
+.ledger{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.lrow{background:var(--card);padding:15px 18px;display:grid;grid-template-columns:56px 1fr auto auto;gap:14px;align-items:center;font-size:13.5px}
+.lrow .id{font-family:ui-monospace,monospace;color:var(--mut);font-size:12px}
+.lrow .nm{font-weight:600}
+.lrow .nm small{display:block;font-weight:400;color:var(--mut);font-size:11.5px}
+.tag{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:99px;background:var(--green-soft);color:var(--green);font-weight:700}
+.tag.off{background:#f2eee8;color:#8a7f72}
+.empty{padding:36px;text-align:center;color:var(--mut);font-size:14px;background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
+
+/* footer */
+footer{border-top:1px solid var(--line);margin-top:56px;padding:24px 0 30px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);align-items:center}
+footer b{color:var(--ink)}
+footer a{color:var(--green);text-decoration:none;border-bottom:1px solid rgba(15,81,50,.3)}
+.fl{display:flex;align-items:center;gap:9px}
+.fl svg{width:17px;height:17px;flex:none}
+.fr{display:flex;gap:13px;flex-wrap:wrap;align-items:center}
+
+#toast{position:fixed;left:50%;bottom:24px;translate:-50% 200%;background:var(--green);color:#fff;padding:13px 22px;border-radius:12px;font-size:13.5px;font-weight:500;transition:.3s cubic-bezier(.2,.9,.2,1);max-width:min(92vw,520px);z-index:60;box-shadow:0 16px 34px rgba(27,42,36,.24)}
+#toast.on{translate:-50% 0}
+#toast.err{background:var(--err)}
+
+@media(max-width:860px){
+  .split{grid-template-columns:1fr}
+  .lrow{grid-template-columns:44px 1fr;gap:8px 12px}
+  .lrow .right{grid-column:2}
+  .masthead{padding:34px 0 26px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div class="switch">
+        <button id="n677" class="on">MAINNET 677</button>
+        <button id="n968" disabled title="Testnet pending">TESTNET 968</button>
+      </div>
+      <div class="wallet"><span class="chip" id="chip"></span><span class="mono" id="addr">not connected</span><button class="btn ghost" id="connect" style="width:auto;padding:8px 14px;font-size:13px">Connect wallet</button></div>
+    </div>
+
+    <div class="masthead">
+      <div class="kick">BOT Chain · Chain 677</div>
+      <h1>Recurring revenue, settled in BOT.</h1>
+      <p>Publish a plan once. Subscribers approve a single cycle at a time — no custodian holds the money, no card network takes a cut. Merchants receive 99% instantly; the protocol keeps 1%.</p>
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <section class="sec">
+    <h2>Live plans</h2>
+    <p class="sub">Every plan below is read straight from the contract. Subscribing charges exactly one interval up front.</p>
+    <div class="plans" id="plans"></div>
+  </section>
+
+  <section class="sec">
+    <h2>Publish a plan</h2>
+    <p class="sub">Anyone can become a merchant. The address that creates the plan is the address that gets paid.</p>
+    <div class="split">
+      <div class="box">
+        <h3>New plan</h3>
+        <label>Plan name<input id="pName" placeholder="Pro Monthly" maxlength="60" autocomplete="off"></label>
+        <div class="row2">
+          <label>Price (BOT)<input id="pAmt" type="number" step="0.000001" min="0.000001" placeholder="0.001"></label>
+          <label>Interval (seconds)<input id="pInt" type="number" min="1" step="1" placeholder="60"></label>
+        </div>
+        <button class="btn" id="createBtn">Publish plan</button>
+        <p class="note">Interval is measured in chain seconds. 60 = one minute, 2592000 = one month.</p>
+      </div>
+      <div class="box">
+        <h3>My subscriptions</h3>
+        <div id="mine"></div>
+        <p class="note">Renew unlocks once the paid period expires. Cancel stops future renewals — the current cycle stays paid.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>Protocol ledger</h2>
+    <p class="sub">Aggregate volume and the fee that has accrued to the protocol.</p>
+    <div class="ledger" style="grid-template-columns:1fr 1fr;margin-bottom:26px">
+      <div class="lrow" style="display:block"><div class="mark" style="font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)">Total volume</div><div id="vol" style="font-family:'Fraunces',serif;font-size:29px;margin-top:6px">—</div></div>
+      <div class="lrow" style="display:block"><div class="mark" style="font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)">Fees collected</div><div id="fees" style="font-family:'Fraunces',serif;font-size:29px;margin-top:6px">—</div></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="fl">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="#0f5132" stroke-width="1.7"/><path d="M8 12h8M12 8v8" stroke="#b7791f" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <span><b>BOT Chain</b> · Subscription Billing</span>
+    </div>
+    <div class="fr">
+      <span>Chain ID 677</span>
+      <span class="mono">0xC0e9190EEf783b9CD61e201A3d5D59a1887FBe8d</span>
+      <a href="https://botchain.ai" target="_blank" rel="noopener">BOT Chain Website ↗</a>
+      <a href="https://scan.botchain.ai/" target="_blank" rel="noopener">BOTScan Explorer ↗</a>
+    </div>
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="importmap">{"imports":{"ethers":"https://esm.sh/ethers@6.13.2"}}</script>
+<script type="module">
+import { ethers } from 'ethers';
+
+const ABI = [
+  'function createPlan(string name, uint256 amount, uint256 interval) returns (uint256)',
+  'function subscribe(uint256 pid) payable returns (uint256)',
+  'function renew(uint256 sid) payable',
+  'function cancel(uint256 sid)',
+  'function deactivatePlan(uint256 pid)',
+  'function planCount() view returns (uint256)',
+  'function subscriptionCount() view returns (uint256)',
+  'function planInfo(uint256 pid) view returns (address merchant, string name, uint256 amount, uint256 interval, uint256 subs, uint256 revenue, bool active)',
+  'function subscriptionInfo(uint256 sid) view returns (uint256 planId, address subscriber, uint256 paidUntil, uint256 cycles, bool active)',
+  'function subscriberSubscriptions(address, uint256) view returns (uint256)',
+  'function totalVolume() view returns (uint256)',
+  'function totalFees() view returns (uint256)',
+  'function FEE_BPS() view returns (uint256)'
+];
+
+const NET = { 677: { rpc: 'https://rpc.botchain.ai', hex: '0x2a5', label: 'BOT Chain Mainnet' }, 968: { rpc: 'https://rpc.bohr.life', hex: '0x3c8', label: 'BOT Chain Testnet' } };
+const CA = { 677: '0xC0e9190EEf783b9CD61e201A3d5D59a1887FBe8d', 968: '' };
+
+const $ = (s) => document.querySelector(s);
+const bot = (v, d = 4) => Number(ethers.formatEther(v)).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const short = (a) => (!a ? '—' : a.slice(0, 6) + '…' + a.slice(-4));
+const span = (secs) => secs < 90 ? secs + 's' : secs < 5400 ? Math.round(secs / 60) + ' min' : secs < 172800 ? Math.round(secs / 3600) + ' hr' : Math.round(secs / 86400) + ' days';
+
+let chainId = 677, acct = null, signer = null, PLANS = [], busy = false;
+const ro = { 677: new ethers.JsonRpcProvider(NET[677].rpc) };
+let _t;
+function toast(m, bad) { const t = $('#toast'); t.textContent = m; t.classList.toggle('err', !!bad); t.classList.add('on'); clearTimeout(_t); _t = setTimeout(() => t.classList.remove('on'), 5000); }
+
+function reader() { return CA[chainId] ? new ethers.Contract(CA[chainId], ABI, new ethers.JsonRpcProvider(NET[chainId].rpc)) : null; }
+
+const STOP = Symbol('stop');
+async function collect(fn, chunk = 8, cap = 400) {
+  const out = [];
+  for (let base = 0; base < cap; base += chunk) {
+    const batch = await Promise.all(Array.from({ length: chunk }, (_, k) =>
+      Promise.resolve().then(() => fn(base + k)).catch(() => STOP)));
+    for (const r of batch) { if (r === STOP) return out; out.push(r); }
+  }
+  return out;
+}
+
+async function byCount(count, fn, chunk = 10) {
+  const out = [];
+  for (let base = 0; base < count; base += chunk) {
+    const end = Math.min(count, base + chunk);
+    const part = await Promise.all(Array.from({ length: end - base }, (_, k) => fn(base + k)));
+    out.push(...part);
+  }
+  return out;
+}
+
+function injected() { return window.ethereum || window.okxwallet || null; }
+
+async function ensureChain() {
+  const eth = injected(); if (!eth) return;
+  const n = NET[chainId];
+  try { await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: n.hex }] }); }
+  catch (e) {
+    if (e && (e.code === 4902 || e.code === -32603 || /unrecognized|not added|unknown/i.test(e.message || ''))) {
+      await eth.request({ method: 'wallet_addEthereumChain', params: [{ chainId: n.hex, chainName: n.label, nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 }, rpcUrls: [n.rpc], blockExplorerUrls: ['https://scan.botchain.ai'] }] });
+    }
+  }
+}
+
+async function connect() {
+  const eth = injected();
+  if (!eth) { toast('No browser wallet found. Install MetaMask or OKX Wallet and reload.', true); return; }
+  try {
+    await eth.request({ method: 'eth_requestAccounts' });
+    await ensureChain();
+    signer = await new ethers.BrowserProvider(eth).getSigner();
+    acct = await signer.getAddress();
+    $('#addr').textContent = short(acct);
+    $('#chip').classList.add('on');
+    $('#connect').textContent = 'Disconnect';
+    if (eth.on) eth.on('accountsChanged', () => location.reload());
+    toast('Connected');
+    await load();
+  } catch (e) { toast('Connect failed: ' + ((e && (e.shortMessage || e.message)) || e), true); }
+}
+$('#connect').onclick = () => (acct ? location.reload() : connect());
+$('#n677').onclick = () => { chainId = 677; paintNet(); load(); };
+$('#n968').onclick = () => { if (!CA[968]) { toast('Testnet deployment pending.', true); return; } chainId = 968; paintNet(); load(); };
+function paintNet() { $('#n677').classList.toggle('on', chainId === 677); $('#n968').classList.toggle('on', chainId === 968); }
+
+async function load() {
+  const c = reader(); if (!c) return;
+  const [plansRes, totalsRes] = await Promise.allSettled([
+    (async () => {
+      const n = Number(await c.planCount());
+      return byCount(n, async (i) => {
+        const p = await c.planInfo(i);
+        return { id: i, merchant: p.merchant, name: p.name, amount: p.amount, interval: Number(p.interval), subs: Number(p.subs), revenue: p.revenue, active: p.active };
+      });
+    })(),
+    Promise.all([c.totalVolume(), c.totalFees()])
+  ]);
+  PLANS = plansRes.status === 'fulfilled' ? plansRes.value : [];
+  if (totalsRes.status === 'fulfilled') {
+    $('#vol').textContent = bot(totalsRes.value[0]) + ' BOT';
+    $('#fees').textContent = bot(totalsRes.value[1]) + ' BOT';
+  }
+  render();
+  if (acct) await renderMine();
+}
+
+function render() {
+  const w = $('#plans');
+  if (!PLANS.length) { w.innerHTML = '<div class="empty">No plans published yet. Be the first merchant — the form is just below.</div>'; return; }
+  w.innerHTML = PLANS.map((p) => {
+    const mine = acct && p.merchant.toLowerCase() === acct.toLowerCase();
+    return '<article class="plan' + (p.active ? '' : ' dead') + '">'
+      + (mine ? '<span class="owner-tag">yours</span>' : '')
+      + '<div class="tier">Plan #' + p.id + '</div>'
+      + '<h3>' + esc(p.name) + '</h3>'
+      + '<div class="price"><b>' + bot(p.amount) + '</b><span>BOT / ' + span(p.interval) + '</span></div>'
+      + '<ul><li>' + p.subs + ' active subscriber' + (p.subs === 1 ? '' : 's') + '</li><li>' + bot(p.revenue) + ' BOT settled to merchant</li><li>Cancel any time, no lock-in</li></ul>'
+      + '<button class="btn" data-sub="' + p.id + '"' + (p.active ? '' : ' disabled') + '>' + (p.active ? 'Subscribe · ' + bot(p.amount) + ' BOT' : 'Plan closed') + '</button>'
+      + (mine && p.active ? '<button class="btn ghost" data-off="' + p.id + '">Deactivate plan</button>' : '')
+      + '</article>';
+  }).join('');
+}
+
+async function renderMine() {
+  const c = reader(); if (!c || !acct) return;
+  const box = $('#mine');
+  try {
+    const total = Number(await c.subscriptionCount());
+    const subs = await collect(async (i) => {
+      const sid = Number(await c.subscriberSubscriptions(acct, i));
+      if (sid >= total) throw new Error('out of range');
+      const s = await c.subscriptionInfo(sid);
+      return { sid, plan: Number(s.planId), until: Number(s.paidUntil), cycles: Number(s.cycles), active: s.active };
+    });
+    if (!subs.length) { box.innerHTML = '<div class="empty" style="border:0;padding:20px 0">Nothing yet — subscribe to a plan above.</div>'; return; }
+    box.innerHTML = subs.map((s) => {
+      const plan = PLANS.find((p) => p.id === s.plan);
+      const expired = Date.now() / 1000 >= s.until;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)">'
+        + '<div><div style="font-weight:600">' + esc(plan ? plan.name : 'Plan #' + s.plan) + '</div>'
+        + '<div style="font-size:12px;color:var(--mut)">sub #' + s.sid + ' · ' + s.cycles + ' cycle' + (s.cycles === 1 ? '' : 's') + ' · ' + (s.active ? (expired ? 'renewable' : 'paid to ' + new Date(s.until * 1000).toLocaleDateString()) : 'cancelled') + '</div></div>'
+        + '<div style="display:flex;gap:6px">'
+        + (s.active && expired ? '<button class="btn ghost" style="width:auto;padding:7px 11px;font-size:12px" data-renew="' + s.sid + '">Renew</button>' : '')
+        + (s.active ? '<button class="btn ghost" style="width:auto;padding:7px 11px;font-size:12px" data-cancel="' + s.sid + '">Cancel</button>' : '')
+        + '</div></div>';
+    }).join('');
+  } catch (e) { box.innerHTML = '<div class="empty" style="border:0;padding:20px 0">Could not read subscriptions.</div>'; }
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+async function withSigner(fn) {
+  if (!signer) { await connect(); if (!signer) return; }
+  if (busy) { toast('A transaction is already in flight.'); return; }
+  busy = true;
+  try { await fn(); } finally { busy = false; }
+}
+
+async function send(method, args, value) {
+  const c = new ethers.Contract(CA[chainId], ABI, signer);
+  const tx = await c[method](...args, value !== undefined ? { value } : {});
+  toast('Sent ' + tx.hash.slice(0, 12) + '… waiting');
+  const rc = await tx.wait();
+  if (rc.status !== 1) throw new Error('reverted');
+  toast('Confirmed in block ' + rc.blockNumber);
+  await load();
+}
+
+document.addEventListener('click', async (e) => {
+  const sub = e.target.closest('[data-sub]');
+  const off = e.target.closest('[data-off]');
+  const ren = e.target.closest('[data-renew]');
+  const can = e.target.closest('[data-cancel]');
+  if (sub) {
+    const p = PLANS.find((x) => x.id === Number(sub.dataset.sub));
+    if (!p || !p.active) { toast('That plan is closed.', true); return; }
+    await withSigner(async () => { try { await send('subscribe', [p.id], p.amount); } catch (err) { toast('Subscribe failed: ' + ((err && (err.shortMessage || err.message)) || err), true); } });
+  }
+  if (off) {
+    await withSigner(async () => { try { await send('deactivatePlan', [Number(off.dataset.off)]); } catch (err) { toast('Deactivate failed: ' + ((err && (err.shortMessage || err.message)) || err), true); } });
+  }
+  if (ren) {
+    await withSigner(async () => { try { await send('renew', [Number(ren.dataset.renew)]); } catch (err) { toast('Renew failed: ' + ((err && (err.shortMessage || err.message)) || err), true); } });
+  }
+  if (can) {
+    await withSigner(async () => { try { await send('cancel', [Number(can.dataset.cancel)]); } catch (err) { toast('Cancel failed: ' + ((err && (err.shortMessage || err.message)) || err), true); } });
+  }
+});
+
+$('#createBtn').onclick = async () => {
+  const name = $('#pName').value.trim();
+  const amt = Number($('#pAmt').value);
+  const itv = Number($('#pInt').value);
+  if (!name) { toast('Give the plan a name.', true); return; }
+  if (!amt || amt <= 0) { toast('Price must be greater than zero.', true); return; }
+  if (!Number.isInteger(itv) || itv <= 0) { toast('Interval must be a whole number of seconds.', true); return; }
+  await withSigner(async () => {
+    try {
+      await send('createPlan', [name, ethers.parseEther(String(amt)), itv]);
+      $('#pName').value = ''; $('#pAmt').value = ''; $('#pInt').value = '';
+    } catch (err) { toast('Publish failed: ' + ((err && (err.shortMessage || err.message)) || err), true); }
+  });
+};
+
+load();
+setInterval(load, 45000);
+</script>
+</body>
+</html>
