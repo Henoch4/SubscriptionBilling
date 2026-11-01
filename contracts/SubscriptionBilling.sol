@@ -46,6 +46,8 @@ contract SubscriptionBilling is ReentrancyGuard {
     event Subscribed(uint256 indexed pid, uint256 indexed sid, address indexed subscriber, uint256 amount);
     event Renewed(uint256 indexed sid, address indexed subscriber, uint256 amount);
     event Cancelled(uint256 indexed sid, address indexed subscriber);
+    event SubscriptionRefunded(uint256 indexed sid, address indexed subscriber, uint256 amount);
+    event RevenueWithdrawn(uint256 indexed pid, address indexed merchant, uint256 amount);
 
     function createPlan(string calldata name, uint256 amount, uint256 interval) external returns (uint256) {
         require(amount > 0, "Zero amount");
@@ -62,12 +64,25 @@ contract SubscriptionBilling is ReentrancyGuard {
     }
 
     function _charge(Plan storage p, uint256 amount) internal {
+        // FIX: net revenue now accrues into the plan's custodial revenue pool
+        // (previously forwarded instantly to the merchant, which left nothing
+        // to refund a cancelling subscriber and no claimable income path).
         uint256 fee = amount * FEE_BPS / 10000;
-        uint256 net = amount - fee;
-        p.revenue += net;
+        p.revenue += (amount - fee);
         totalVolume += amount;
         totalFees += fee;
-        payable(p.merchant).transfer(net);
+    }
+
+    // FIX: merchant income claim — withdraw accrued net revenue (production runpath).
+    function withdrawRevenue(uint256 pid) external nonReentrant {
+        Plan storage p = plans[pid];
+        require(msg.sender == p.merchant, "Merchant only");
+        uint256 amount = p.revenue;
+        require(amount > 0, "No revenue");
+        p.revenue = 0;
+        (bool ok, ) = payable(msg.sender).call{value: amount}("");
+        require(ok, "Revenue transfer failed");
+        emit RevenueWithdrawn(pid, msg.sender, amount);
     }
 
     function subscribe(uint256 pid) external payable nonReentrant returns (uint256) {
@@ -97,13 +112,27 @@ contract SubscriptionBilling is ReentrancyGuard {
         emit Renewed(sid, msg.sender, msg.value);
     }
 
-    function cancel(uint256 sid) external {
+    function cancel(uint256 sid) external nonReentrant {
         Subscription storage s = subscriptions[sid];
         require(s.active, "Not active");
         require(s.subscriber == msg.sender, "Not subscriber");
         s.active = false;
         Plan storage p = plans[s.planId];
         if (p.subscriberCount > 0) p.subscriberCount -= 1;
+        // FIX: pro-rata refund of the unused tail of the current cycle, paid from
+        // the plan's custodial revenue pool (net of the protocol fee). Can only
+        // refund what the subscriber's own net contribution covers.
+        if (block.timestamp < s.paidUntil && p.revenue > 0) {
+            uint256 net = p.amount - (p.amount * FEE_BPS / 10000);
+            uint256 refund = net * (s.paidUntil - block.timestamp) / p.interval;
+            if (refund > p.revenue) refund = p.revenue;
+            if (refund > 0) {
+                p.revenue -= refund;
+                (bool ok, ) = payable(msg.sender).call{value: refund}("");
+                require(ok, "Refund transfer failed");
+                emit SubscriptionRefunded(sid, msg.sender, refund);
+            }
+        }
         emit Cancelled(sid, msg.sender);
     }
 
