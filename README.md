@@ -4,7 +4,7 @@ Create a billing plan, subscribe, and renew on-chain. Each renewal requires a tr
 
 ## Mainnet status
 
-Contract on BOT Chain mainnet (677): [0xC0e9190EEf783b9CD61e201A3d5D59a1887FBe8d](https://scan.botchain.ai/address/0xC0e9190EEf783b9CD61e201A3d5D59a1887FBe8d).
+Contract on BOT Chain mainnet (677): [0xFf47B79ea50059d550d95C231117640475D9Af27](https://scan.botchain.ai/address/0xFf47B79ea50059d550d95C231117640475D9Af27).
 
 Wallet actions require BOT Chain mainnet, deployed bytecode, and a connected compatible wallet. Every action is simulated before a transaction review; only a subsequent wallet confirmation can send it.
 
@@ -19,15 +19,19 @@ Wallet actions require BOT Chain mainnet, deployed bytecode, and a connected com
 
 ## Contract interface
 
-`frontend/product.json` uses the deployment-era ABI from the recorded deployment artifacts. The current Solidity source may contain newer fixes; it must not be assumed to match deployed bytecode.
+`frontend/product.json` uses the current-source ABI, matched against the deployed mainnet runtime bytecode. Explorer source publication is tracked separately.
 
 | Action | Contract signature |
 |---|---|
+| Update vested subscription revenue | `accrueSubscription(uint256)` |
 | Cancel your subscription | `cancel(uint256)` |
 | Create a plan | `createPlan(string,uint256,uint256)` |
 | Deactivate your plan | `deactivatePlan(uint256)` |
 | Renew a subscription | `renew(uint256)` |
 | Subscribe to a plan | `subscribe(uint256)` |
+| Withdraw fees | `withdrawFees()` |
+| Withdraw revenue | `withdrawRevenue(uint256)` |
+| Withdraw a page of vested revenue | `withdrawRevenueFor(uint256,uint256,uint256)` |
 
 ## Run locally
 
@@ -51,3 +55,7 @@ The test requires Chromium or Edge. Windows defaults to the standard Edge instal
 ## Deployment and assessment
 
 Update `frontend/product.json` only after confirming the new contract's network, bytecode and ABI. Do not substitute placeholder addresses or remove truthful limitations. Operator-wallet testing proves technical activity, not independent users. Official social accounts, launch posts, independent users and continuous operation require separate evidence.
+
+## Legacy version
+
+[0xC0e9190EEf783b9CD61e201A3d5D59a1887FBe8d](https://scan.botchain.ai/address/0xC0e9190EEf783b9CD61e201A3d5D59a1887FBe8d) remains accessible through the local frontend's `?legacy=1` read-only view. Deployment of this version did not migrate legacy balances or records.
